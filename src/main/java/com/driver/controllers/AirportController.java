@@ -140,7 +140,7 @@ public class AirportController {
                 if (flight.getFlightId() == flightId) {
                     if (Objects.equals(passengerFlightMap.get(passengerId), flightId)) return FAILURE;
                     int maxCapacity = flight.getMaxCapacity();
-                    if (noOfBookingsInFlight.get(flightId) >= maxCapacity) return FAILURE;
+                    if (noOfBookingsInFlight.getOrDefault(flightId,0) >= maxCapacity) return FAILURE;
                     passengerFlightMap.put(passengerId, flightId);
                     break;
                 }
