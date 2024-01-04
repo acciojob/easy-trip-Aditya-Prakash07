@@ -34,15 +34,19 @@ public class AirportController {
     public String getLargestAirportName(){
 
         //Largest airport is in terms of terminals. 3 terminal airport is larger than 2 terminal airport
-        //Incase of a tie return the Lexicographically smallest airportName
-        List<Airport> airports = Data.getAirport();
-        String largestAirport = "";
-        int terminal = -1;
-        for(Airport airport:airports){
-            if(airport.getNoOfTerminals() >= terminal){
-                largestAirport = largestAirport.compareTo(airport.getAirportName()) > 0?airport.getAirportName():largestAirport;
-                terminal = airport.getNoOfTerminals();
+        //Incase of a tie return the Lexicographically smallest airportNam
+        try {
+            List<Airport> airports = Data.getAirport();
+            String largestAirport = "";
+            int terminal = -1;
+            for (Airport airport : airports) {
+                if (airport.getNoOfTerminals() >= terminal) {
+                    largestAirport = largestAirport.compareTo(airport.getAirportName()) > 0 ? airport.getAirportName() : largestAirport;
+                    terminal = airport.getNoOfTerminals();
+                }
             }
+        }catch(Exception ex){
+            ex.printStackTrace();
         }
        return null;
     }
@@ -52,12 +56,15 @@ public class AirportController {
 
         //Find the duration by finding the shortest flight that connects these 2 cities directly
         //If there is no direct flight between 2 cities return -1.
-
-        List<Flight> flights = Data.getFlights();
-        List<Flight> flights1 = flights.stream().filter(f->f.getFromCity().equals(fromCity) && f.getToCity().equals(toCity)).collect(Collectors.toList());
-        double duration = Double.MAX_VALUE;
-        for(Flight flight : flights1){
-            duration = Math.min(flight.getDuration(), duration);
+        try {
+            List<Flight> flights = Data.getFlights();
+            List<Flight> flights1 = flights.stream().filter(f -> f.getFromCity().equals(fromCity) && f.getToCity().equals(toCity)).collect(Collectors.toList());
+            double duration = Double.MAX_VALUE;
+            for (Flight flight : flights1) {
+                duration = Math.min(flight.getDuration(), duration);
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
         if(duration == Double.MAX_VALUE)return -1;
         return duration;
@@ -68,22 +75,24 @@ public class AirportController {
 
         //Calculate the total number of people who have flights on that day on a particular airport
         //This includes both the people who have come for a flight and who have landed on an airport after their flight
+        try {
+            List<Airport> airports = Data.getAirport();
+            City city = airports.stream().filter(airport -> airport.getAirportName().equals(airportName)).findFirst().map(Airport::getCity).orElse(null);
 
-        List<Airport> airports = Data.getAirport();
-        City city = airports.stream().filter(airport -> airport.getAirportName().equals(airportName)).findFirst().map(Airport::getCity).orElse(null);
+            List<Integer> flightIds = Data.getFlights().stream().filter(f -> f.getFlightDate().equals(date) && (f.getFromCity().equals(city) || f.getToCity().equals(city))).map(f -> f.getFlightId()).collect(Collectors.toList());
 
-        List<Integer> flightIds = Data.getFlights().stream().filter(f->f.getFlightDate().equals(date) && (f.getFromCity().equals(city) || f.getToCity().equals(city))).map(f->f.getFlightId()).collect(Collectors.toList());
+            int count = 0;
 
-        int count = 0;
+            Map<Integer, Integer> passengerFlightMap = Data.passengerFlightMap;
 
-        Map<Integer,Integer> passengerFlightMap =  Data.passengerFlightMap;
-
-        for(Integer passengerId : passengerFlightMap.keySet()){
-            if(flightIds.contains(passengerFlightMap.get(passengerId))){
-                count++;
+            for (Integer passengerId : passengerFlightMap.keySet()) {
+                if (flightIds.contains(passengerFlightMap.get(passengerId))) {
+                    count++;
+                }
             }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
-
         return count;
     }
 
@@ -94,11 +103,15 @@ public class AirportController {
         //Price for any flight will be : 3000 + noOfPeopleWhoHaveAlreadyBooked*50
         //Suppose if 2 people have booked the flight already : the price of flight for the third person will be 3000 + 2*50 = 3100
         //This will not include the current person who is trying to book, he might also be just checking price
-
         int bookedPassengerCountInFlight = 0;
-        Map<Integer,Integer> passengerFlightMap = Data.passengerFlightMap;
-        for(Integer passengerId : passengerFlightMap.keySet()){
-            if(passengerFlightMap.get(passengerId).equals(flightId))bookedPassengerCountInFlight++;
+        try {
+
+            Map<Integer, Integer> passengerFlightMap = Data.passengerFlightMap;
+            for (Integer passengerId : passengerFlightMap.keySet()) {
+                if (passengerFlightMap.get(passengerId).equals(flightId)) bookedPassengerCountInFlight++;
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
         return 3000+ (50*bookedPassengerCountInFlight);
 
@@ -114,24 +127,26 @@ public class AirportController {
         //else if you are able to book a ticket then return "SUCCESS"
         String FAILURE = "FAILURE";
         String SUCCESS = "SUCCESS";
-
-        Map<Integer,Integer> passengerFlightMap = Data.passengerFlightMap;
-        Map<Integer,Integer> noOfBookingsInFlight = new HashMap<>();
-        for(Integer passenger : passengerFlightMap.keySet()){
-            noOfBookingsInFlight.put(passengerFlightMap.get(passenger),noOfBookingsInFlight.getOrDefault(passengerFlightMap.get(passenger),0)+1);
-        }
-        List<Flight> flights = Data.getFlights();
-        if(flights.isEmpty())return FAILURE;
-        for(Flight flight : flights){
-            if(flight.getFlightId() == flightId){
-                if(Objects.equals(passengerFlightMap.get(passengerId), flightId))return FAILURE;
-                int maxCapacity = flight.getMaxCapacity();
-                if(noOfBookingsInFlight.get(flightId) >= maxCapacity )return FAILURE;
-                passengerFlightMap.put(passengerId,flightId);
-                break;
+        try {
+            Map<Integer, Integer> passengerFlightMap = Data.passengerFlightMap;
+            Map<Integer, Integer> noOfBookingsInFlight = new HashMap<>();
+            for (Integer passenger : passengerFlightMap.keySet()) {
+                noOfBookingsInFlight.put(passengerFlightMap.get(passenger), noOfBookingsInFlight.getOrDefault(passengerFlightMap.get(passenger), 0) + 1);
             }
+            List<Flight> flights = Data.getFlights();
+            if (flights.isEmpty()) return FAILURE;
+            for (Flight flight : flights) {
+                if (flight.getFlightId() == flightId) {
+                    if (Objects.equals(passengerFlightMap.get(passengerId), flightId)) return FAILURE;
+                    int maxCapacity = flight.getMaxCapacity();
+                    if (noOfBookingsInFlight.get(flightId) >= maxCapacity) return FAILURE;
+                    passengerFlightMap.put(passengerId, flightId);
+                    break;
+                }
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
-
         return SUCCESS;
     }
 
@@ -144,16 +159,19 @@ public class AirportController {
         // and also cancel the ticket that passenger had booked earlier on the given flightId
         String FAILURE = "FAILURE";
         String SUCCESS = "SUCCESS";
-        Map<Integer,Integer> passengerFlightMap = Data.passengerFlightMap;
-        if(passengerFlightMap.isEmpty() || !passengerFlightMap.get(passengerId).equals(flightId))return FAILURE;
+        try {
+            Map<Integer, Integer> passengerFlightMap = Data.passengerFlightMap;
+            if (passengerFlightMap.isEmpty() || !passengerFlightMap.get(passengerId).equals(flightId)) return FAILURE;
 
-        for(Integer personId : passengerFlightMap.keySet()){
-            if(passengerFlightMap.get(personId).equals(flightId)){
-                passengerFlightMap.remove(personId);
-                return SUCCESS;
+            for (Integer personId : passengerFlightMap.keySet()) {
+                if (passengerFlightMap.get(personId).equals(flightId)) {
+                    passengerFlightMap.remove(personId);
+                    return SUCCESS;
+                }
             }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
-
        return FAILURE;
     }
 
@@ -163,12 +181,16 @@ public class AirportController {
 
         //Tell the count of flight bookings done by a passenger: This will tell the total count of flight bookings done by a passenger :
         Map<Integer,Integer> passengerFlightMap = Data.passengerFlightMap;
+        try {
 
-        int count = 0;
-        for(Integer passenger : passengerFlightMap.keySet()){
-            if(passengerFlightMap.containsKey(passenger)){
-                ++count;
+            int count = 0;
+            for (Integer passenger : passengerFlightMap.keySet()) {
+                if (passengerFlightMap.containsKey(passenger)) {
+                    ++count;
+                }
             }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
        return count;
     }
@@ -188,13 +210,16 @@ public class AirportController {
         //We need to get the starting airportName from where the flight will be taking off (Hint think of City variable if that can be of some use)
         //return null incase the flightId is invalid or you are not able to find the airportName
         List<Flight> flights = Data.getFlights();
+        try {
+            Map<City, String> cityAirportMap = Data.getAirport().stream().collect(Collectors.toMap(Airport::getCity, Airport::getAirportName));
 
-        Map<City,String> cityAirportMap = Data.getAirport().stream().collect(Collectors.toMap(Airport::getCity, Airport::getAirportName));
-
-        for(Flight flight : flights){
-            if(flight.getFlightId() == flightId){
-               return  cityAirportMap.get(flight.getFromCity());
+            for (Flight flight : flights) {
+                if (flight.getFlightId() == flightId) {
+                    return cityAirportMap.get(flight.getFromCity());
+                }
             }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
         return null;
     }
@@ -208,8 +233,12 @@ public class AirportController {
         //Revenue will also decrease if some passenger cancels the flight
         Map<Integer,Integer> passengerFlightMap = Data.passengerFlightMap;
         int count = 0;
-        for(Integer passengerId : passengerFlightMap.keySet()){
-            if(passengerFlightMap.get(passengerId).equals(flightId))count++;
+        try {
+            for (Integer passengerId : passengerFlightMap.keySet()) {
+                if (passengerFlightMap.get(passengerId).equals(flightId)) count++;
+            }
+        }catch (Exception ex){
+            ex.printStackTrace();
         }
         return 3000*count + 50 *(((count-1)*count)/2);
     }
