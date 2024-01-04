@@ -56,10 +56,10 @@ public class AirportController {
 
         //Find the duration by finding the shortest flight that connects these 2 cities directly
         //If there is no direct flight between 2 cities return -1.
+        double duration = Double.MAX_VALUE;
         try {
             List<Flight> flights = Data.getFlights();
             List<Flight> flights1 = flights.stream().filter(f -> f.getFromCity().equals(fromCity) && f.getToCity().equals(toCity)).collect(Collectors.toList());
-            double duration = Double.MAX_VALUE;
             for (Flight flight : flights1) {
                 duration = Math.min(flight.getDuration(), duration);
             }
@@ -75,13 +75,14 @@ public class AirportController {
 
         //Calculate the total number of people who have flights on that day on a particular airport
         //This includes both the people who have come for a flight and who have landed on an airport after their flight
+        int count = 0;
+
         try {
             List<Airport> airports = Data.getAirport();
             City city = airports.stream().filter(airport -> airport.getAirportName().equals(airportName)).findFirst().map(Airport::getCity).orElse(null);
 
             List<Integer> flightIds = Data.getFlights().stream().filter(f -> f.getFlightDate().equals(date) && (f.getFromCity().equals(city) || f.getToCity().equals(city))).map(f -> f.getFlightId()).collect(Collectors.toList());
 
-            int count = 0;
 
             Map<Integer, Integer> passengerFlightMap = Data.passengerFlightMap;
 
@@ -181,9 +182,9 @@ public class AirportController {
 
         //Tell the count of flight bookings done by a passenger: This will tell the total count of flight bookings done by a passenger :
         Map<Integer,Integer> passengerFlightMap = Data.passengerFlightMap;
+        int count = 0;
         try {
 
-            int count = 0;
             for (Integer passenger : passengerFlightMap.keySet()) {
                 if (passengerFlightMap.containsKey(passenger)) {
                     ++count;
